@@ -5,3 +5,10 @@ gene_output.json
 results_close_gene.json
 .omc
 .claude
+__pycache__/
+*.pyc
+*.pyo
+.pytest_cache/
+*.egg-info/
+dist/
+build/
