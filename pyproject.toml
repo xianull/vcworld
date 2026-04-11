@@ -1,0 +1,35 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.backends.legacy:build"
+
+[project]
+name = "vcworld"
+version = "0.1.0"
+requires-python = ">=3.8"
+
+[tool.importlinter]
+root_packages = ["cli_pipeline"]
+include_external_packages = true
+
+[[tool.importlinter.contracts]]
+name = "utils must not import from tools or stages"
+type = "forbidden"
+source_modules = ["cli_pipeline.utils"]
+forbidden_modules = ["cli_pipeline.tools", "cli_pipeline.stages"]
+
+[[tool.importlinter.contracts]]
+name = "tools must not import from stages"
+type = "forbidden"
+source_modules = ["cli_pipeline.tools"]
+forbidden_modules = ["cli_pipeline.stages"]
+
+[[tool.importlinter.contracts]]
+name = "stages must not import from agent_workflow"
+type = "forbidden"
+source_modules = ["cli_pipeline.stages"]
+forbidden_modules = ["cli_pipeline.agent_workflow"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_functions = ["test_*"]

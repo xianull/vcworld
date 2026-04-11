@@ -54,7 +54,7 @@ def _default_template_path(task: str) -> str:
 def generate_prompts(*, task: str, retrieval_json: str, drug_desc_json: str, gene_desc_json: str,
                      template_file: Optional[str], output_file: str,
                      cell_line_idx: Optional[int] = None, max_cases: Optional[int] = None,
-                     seed: int = 42) -> None:
+                     seed: int = 42, knowledge_context: Optional[Dict[str, Any]] = None) -> None:
     random.seed(seed)
 
     retrieval = load_json(retrieval_json)
@@ -113,6 +113,22 @@ def generate_prompts(*, task: str, retrieval_json: str, drug_desc_json: str, gen
 
             f.write(f"=== Prompt {i+1} ({drug} | {gene}) ===\n")
             f.write(filled)
+
+            if knowledge_context:
+                pathway = knowledge_context.get("pathway", {})
+                ppi = knowledge_context.get("ppi", {})
+                shared = pathway.get("shared_pathways", [])
+                interactors = ppi.get("interactors", [])
+                bio_section = (
+                    "\n[Biological Context]\n"
+                    f"- Shared pathways (KEGG): {', '.join(shared) if shared else 'None found'}\n"
+                    f"- PPI interactors (STRING): {', '.join(interactors) if interactors else 'None found'}\n"
+                    f"- Gene function: {knowledge_context.get('gene_function') or 'N/A'}\n"
+                    f"- Drug mechanism: {knowledge_context.get('drug_mechanism') or 'N/A'}\n"
+                    "[End of Biological Context]"
+                )
+                f.write(bio_section)
+
             f.write("\n\n" + "=" * 80 + "\n\n")
 
     print(f"Saved prompts: {output_file} (count: {len(cases)})")

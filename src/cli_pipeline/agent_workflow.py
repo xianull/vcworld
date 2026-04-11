@@ -211,6 +211,9 @@ class VCWorldAgentWorkflow:
         with tempfile.NamedTemporaryFile(suffix=".txt", delete=False, mode="w") as pf:
             prompt_path = pf.name
 
+        knowledge = self._state.get("knowledge", {})
+        knowledge_context = knowledge if knowledge else None
+
         try:
             generate_prompts(
                 task=self.task,
@@ -220,6 +223,7 @@ class VCWorldAgentWorkflow:
                 template_file=self.template_file,
                 output_file=prompt_path,
                 seed=self.seed + attempt,
+                knowledge_context=knowledge_context,
             )
             with open(prompt_path, "r", encoding="utf-8") as f:
                 prompt_text = f.read()
