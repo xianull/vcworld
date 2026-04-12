@@ -141,10 +141,14 @@ def convert_cell_line(
     META_COLS = ["drug", "sample", "BARCODE_SUB_LIB_ID",
                  "cell_line_id", "moa-fine", "canonical_smiles", "plate"]
 
+    # Use periodic merging to avoid accumulating thousands of chunks in memory
+    MERGE_EVERY = 200  # merge chunks every N shards to keep memory bounded
+
+    merged_X = []   # list of already-merged csr_matrix blocks
+    merged_meta = []
     chunks_X = []
     chunks_meta = []
     total_cells = 0
-    errors = 0
 
     shard_indices = list(range(TOTAL_SHARDS))
     print(f"[{vcworld_name}] Scanning {TOTAL_SHARDS} shards with {workers} workers...")
@@ -179,20 +183,30 @@ def convert_cell_line(
                 chunks_X.append(X_chunk)
                 chunks_meta.append(meta_chunk)
                 total_cells += X_chunk.shape[0]
-            elif X_chunk is None and meta_chunk is None and futures[fut] is not None:
-                # None,None means either empty shard or error — errors already printed
-                pass
+
+            # Periodically merge accumulated chunks to free memory
+            if len(chunks_X) >= MERGE_EVERY:
+                merged_X.append(sp_vstack(chunks_X, format="csr"))
+                merged_meta.append(pd.concat(chunks_meta, ignore_index=True))
+                chunks_X.clear()
+                chunks_meta.clear()
+
             if done % 200 == 0 or done == TOTAL_SHARDS:
                 print(f"[{vcworld_name}]   {done}/{TOTAL_SHARDS} shards done, "
                       f"{total_cells} cells collected so far")
 
-    if not chunks_X:
+    # Merge any remaining chunks
+    if chunks_X:
+        merged_X.append(sp_vstack(chunks_X, format="csr"))
+        merged_meta.append(pd.concat(chunks_meta, ignore_index=True))
+
+    if not merged_X:
         print(f"[{vcworld_name}] No cells found for {cvcl_id}!")
         return
 
-    print(f"[{vcworld_name}] Stacking {len(chunks_X)} chunks ({total_cells} cells)...")
-    X = sp_vstack(chunks_X, format="csr")
-    obs = pd.concat(chunks_meta, ignore_index=True)
+    print(f"[{vcworld_name}] Final merge ({total_cells} cells)...")
+    X = sp_vstack(merged_X, format="csr")
+    obs = pd.concat(merged_meta, ignore_index=True)
     var = pd.DataFrame(index=gene_names)
     var.index.name = "gene_name"
 
