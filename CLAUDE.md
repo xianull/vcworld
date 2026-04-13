@@ -3,17 +3,23 @@
 ## Environment Setup
 
 - **Local machine**: Code writing, editing, version control (macOS)
-- **Remote server**: Code execution, data download, pipeline runs
-- **SSH**: `ssh jcw@192.168.112.108 -p 3313`
+- **Remote servers**: Code execution, data download, pipeline runs
+- **SSH (api-node)**: `ssh jcw@192.168.112.108 -p 3313` — CPU-only, data download & API inference
+- **SSH (h200)**:     `ssh jcw@192.168.112.113` — GPU node, heavy compute (data conversion, training)
 
-### Server Specs
+### api-node Specs
 - Hostname: `api-node`
 - CPU: 96 cores (x86_64)
 - RAM: 503 GB
 - Storage: `/gpfs/flash` 307 TB (78% used)
-- Python: 3.8.10 (via `~/anaconda3`)
-- GPU: none on this node (API inference mode)
+- Python: 3.8.10 (via `~/anaconda3`); use `~/anaconda3/envs/tahoe` for data work
+- GPU: none — use for API inference and lightweight tasks
 - Home dir contents: `anaconda3`, `projects`, `tools`, `scripts`, `mytmp`
+
+### h200 Specs
+- GPU node — use for data conversion (h5ad), model training, heavy compute
+- SSH: `ssh jcw@192.168.112.113`
+- **Prefer h200 for**: `tahoe_to_h5ad.py`, `prepare` stage (DE/DIR computation), any GPU workload
 
 ## Workflow Rules
 
