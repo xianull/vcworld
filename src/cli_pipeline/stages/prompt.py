@@ -45,7 +45,7 @@ def format_observations(pairs: List[List[str]], drug_desc: Dict[str, str], gene_
 
 
 def _default_template_path(task: str) -> str:
-    base_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
+    base_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", ".."))
     if task == "de":
         return os.path.join(base_dir, "support", "DE_template.py")
     return os.path.join(base_dir, "support", "DIR_template.py")
