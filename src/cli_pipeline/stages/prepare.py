@@ -23,11 +23,18 @@ def process_cell_line(
     lfc: float = 0.25,
     pval_neg: float = 0.1,
     n_neg: int = 200,
+    max_cells_per_group: int = 0,
 ) -> None:
     """
     Process a single cell line:
     - differential expression (DE) dataset
     - direction (DIR) dataset
+
+    Args:
+        max_cells_per_group: If > 0, downsample each perturbation group
+            (and control) to at most this many cells before DE.
+            Dramatically speeds up Wilcoxon on large datasets.
+            Set to 0 (default) for full data.
     """
     print(f"\n{'='*20} Processing cell line: {cell_line_name} {'='*20}")
 
@@ -37,6 +44,19 @@ def process_cell_line(
     except FileNotFoundError:
         print(f"ERROR: file not found: {adata_path}")
         return
+
+    # Downsample per group if requested
+    if max_cells_per_group > 0:
+        print(f"Downsampling to max {max_cells_per_group} cells per group...")
+        np.random.seed(seed)
+        keep_idx = []
+        for group in adata.obs[perturbation_col].unique():
+            group_idx = np.where(adata.obs[perturbation_col] == group)[0]
+            if len(group_idx) > max_cells_per_group:
+                group_idx = np.random.choice(group_idx, max_cells_per_group, replace=False)
+            keep_idx.extend(group_idx)
+        adata = adata[sorted(keep_idx)].copy()
+        print(f"After downsampling: {adata.n_obs} cells")
 
     print("Preprocessing...")
     sc.pp.normalize_total(adata, target_sum=1e4)

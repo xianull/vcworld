@@ -25,6 +25,8 @@ def _add_prepare_args(p: argparse.ArgumentParser) -> None:
     p.add_argument("--lfc", type=float, default=0.25)
     p.add_argument("--pval-neg", type=float, default=0.1)
     p.add_argument("--n-neg", type=int, default=200)
+    p.add_argument("--max-cells-per-group", type=int, default=0,
+                   help="Downsample each group to N cells (0=full data, 5000 recommended for speed)")
 
 
 def _add_retrieve_args(p: argparse.ArgumentParser) -> None:
@@ -141,6 +143,7 @@ def main(argv: list[str]) -> int:
             lfc=args.lfc,
             pval_neg=args.pval_neg,
             n_neg=args.n_neg,
+            max_cells_per_group=args.max_cells_per_group,
         )
         return 0
 
